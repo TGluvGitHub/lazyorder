@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block bodyattrs %}data-poll="4000"{% endblock %}
+
+{% block body %}
+<main class="wrap two">
+  <section>
+    <h1 class="lead">What'll it be?</h1>
+    <p class="sub">Pick what you want and how many. Leave your email and you'll get a message the second it's ready. Until then you can play something.</p>
+
+    {% if errors %}
+    <ul class="errors" role="alert">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if not items %}
+      <div class="slip-wrap"><div class="slip"><p class="empty-note">The menu is empty right now. Check back in a bit.</p></div></div>
+    {% else %}
+    <div class="slip-wrap">
+      <form method="post" class="slip" action="{{ url_for('index') }}">
+        <div class="slip-head"><span>Order slip</span><span>No prices, just stuff</span></div>
+
+        <ul class="lines">
+          {% for it in items %}
+          <li class="line{% if not it.available %} out{% endif %}{% if qty.get(it.id, 0) > 0 %} picked{% endif %}">
+            <label for="q{{ it.id }}" title="{{ it.name }}">{{ it.name }}</label>
+            {% if it.max_qty < 10 and it.available %}<small>up to {{ it.max_qty }}</small>{% endif %}
+            <span class="leader"></span>
+            {% if it.available %}
+            <span class="ctl">
+            <label class="self"><input type="checkbox" name="self_{{ it.id }}" {% if selfs.get(it.id) %}checked{% endif %}> serve yourself</label>
+            <span class="stepper">
+              <button type="button" data-d="-1" aria-label="One less {{ it.name }}">&minus;</button>
+              <input id="q{{ it.id }}" type="number" name="qty_{{ it.id }}" min="0" max="{{ it.max_qty }}"
+                     value="{{ qty.get(it.id, 0) }}" inputmode="numeric">
+              <button type="button" data-d="1" aria-label="One more {{ it.name }}">+</button>
+            </span>
+            </span>
+            {% else %}
+            <span class="soldout">sold out</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+
+        <div class="fields">
+          <label>Name <input name="name" maxlength="30" value="{{ form.name }}" autocomplete="given-name" required></label>
+          <label>Email <input name="email" type="email" maxlength="120" value="{{ form.email }}" autocomplete="email" required></label>
+          <label>Anything else? <input name="note" maxlength="200" value="{{ form.note }}" placeholder="no onions, extra napkins..."></label>
+          <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        </div>
+
+        <button class="btn primary" type="submit">Send it in</button>
+      </form>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="side">
+    <h2>Best at waiting</h2>
+    <h3>Longest snake</h3>
+    <ol class="board" data-game="snake"></ol>
+    <h3>Most flappy points</h3>
+    <ol class="board" data-game="flappy"></ol>
+  </aside>
+</main>
+{% endblock %}

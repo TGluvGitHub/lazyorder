@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block bodyattrs %}data-poll="3000" data-token="{{ o.token }}" data-me="{{ o.name }}"{% endblock %}
+
+{% block body %}
+<main class="wrap two">
+  <section>
+    <div class="slip-wrap">
+      <div class="slip" id="ticket">
+        <div class="slip-head"><span>Order #{{ o.id }}</span><span>{{ o.name }}</span></div>
+
+        <div class="stamp-row">
+          <span class="stamp {{ o.status }}" id="stamp">
+            {% if o.status == 'pending' %}In the queue{% elif o.status == 'ready' %}Ready{% else %}Picked up{% endif %}
+          </span>
+        </div>
+        <p class="status-line" id="status-line">
+          {% if o.status == 'pending' %}It's in. We'll email {{ o.email }} when it's ready, and this page changes too.
+          {% elif o.status == 'ready' %}It's ready. Go grab it!
+          {% else %}All done. Thanks!{% endif %}
+        </p>
+
+        <ul class="lines plain">
+          {% for it in items %}
+          <li class="line"><span class="qty">{{ it.qty }} &times;</span><span>{{ it.name }}</span>{% if it.self_serve %}<em class="selftag">serve yourself</em>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% if o.note %}<p class="note">Note: {{ o.note }}</p>{% endif %}
+      </div>
+    </div>
+
+    <section class="games" id="games">
+      <h2>While you wait</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-g="snake" class="on">Snake</button>
+        <button type="button" role="tab" data-g="flappy">Flappy</button>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="cv-snake" width="360" height="360"></canvas>
+        <canvas id="cv-flappy" width="360" height="480" hidden></canvas>
+        <div class="overlay" id="ov">
+          <p id="ov-msg"></p>
+          <button type="button" class="btn primary" id="ov-btn">Start</button>
+        </div>
+      </div>
+
+      <div class="dpad" id="dpad" aria-label="Snake controls">
+        <button type="button" data-dir="up" aria-label="Up">&uarr;</button>
+        <button type="button" data-dir="left" aria-label="Left">&larr;</button>
+        <button type="button" data-dir="down" aria-label="Down">&darr;</button>
+        <button type="button" data-dir="right" aria-label="Right">&rarr;</button>
+      </div>
+      <p class="hint" id="hint"></p>
+    </section>
+  </section>
+
+  <aside class="side">
+    <h2>Best at waiting</h2>
+    <h3>Longest snake</h3>
+    <ol class="board" data-game="snake"></ol>
+    <h3>Most flappy points</h3>
+    <ol class="board" data-game="flappy"></ol>
+  </aside>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('games.js') }}"></script>{% endblock %}

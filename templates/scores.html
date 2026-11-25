@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block bodyattrs %}data-poll="4000"{% endblock %}
+
+{% block body %}
+<main class="wrap">
+  <h1 class="lead">Best at waiting</h1>
+  <p class="sub">Top ten for each game. You only get on the board by playing while your order is in.</p>
+  <div class="boards-2">
+    <div>
+      <h3>Longest snake</h3>
+      <ol class="board" data-game="snake"></ol>
+    </div>
+    <div>
+      <h3>Most flappy points</h3>
+      <ol class="board" data-game="flappy"></ol>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page_title %}{{ page_title }} | {% endif %}{{ site.name }}</title>
+<link rel="icon" id="favicon" href="{{ url_for('favicon') }}?v={{ site.emoji|urlencode }}">
+<style id="theme">:root{ {% for k, v in theme.items() %}{{ k }}:{{ v }};{% endfor %} }</style>
+<link rel="stylesheet" href="{{ asset('style.css') }}">
+</head>
+<body data-base="{{ request.script_root }}"
+      data-pagetitle="{{ page_title or '' }}"
+      data-emoji="{{ site.emoji }}"
+      {% block bodyattrs %}{% endblock %}>
+
+<div class="ann" id="ann" data-id="{{ announcement.id }}" {% if not announcement.text %}hidden{% endif %}>
+  <span class="ann-tag">Heads up</span>
+  <span id="ann-text">{{ announcement.text }}</span>
+  <button type="button" id="ann-x" aria-label="Dismiss announcement">&times;</button>
+</div>
+
+<header class="top">
+  <a class="brand" href="{{ url_for('index') }}">
+    <span class="brand-emoji" data-site-emoji>{{ site.emoji }}</span>
+    <span class="brand-name" data-site-name>{{ site.name }}</span>
+  </a>
+  <nav>
+    <a href="{{ url_for('scores') }}">Scores</a>
+    <a href="{{ url_for('kitchen') }}">Kitchen</a>
+  </nav>
+</header>
+
+{% block body %}{% endblock %}
+
+<footer class="foot">
+  <span data-site-name>{{ site.name }}</span> &middot; orders go straight to the kitchen
+</footer>
+
+<script src="{{ asset('site.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

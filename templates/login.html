@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block body %}
+<main class="wrap narrow">
+  <h1 class="lead">Kitchen</h1>
+  <p class="sub">This part is for whoever's making the food.</p>
+
+  {% if not ready %}
+    <ul class="errors"><li>Login isn't set up yet. Open the <code>.env</code> file, fill in <code>PREPARER_EMAIL</code> and <code>PREPARER_PASSWORD</code>, then restart the app.</li></ul>
+  {% endif %}
+  {% if error %}<ul class="errors" role="alert"><li>{{ error }}</li></ul>{% endif %}
+
+  <div class="slip-wrap">
+    <form method="post" class="slip">
+      <div class="fields">
+        <label>Email <input name="email" type="email" autocomplete="username" required autofocus></label>
+        <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+      </div>
+      <button class="btn primary" type="submit">Come in</button>
+    </form>
+  </div>
+</main>
+{% endblock %}

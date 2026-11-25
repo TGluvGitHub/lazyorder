@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block bodyattrs %}data-csrf="{{ csrf() }}" data-kitchen="1" data-poll="5000"{% endblock %}
+
+{% block body %}
+<main class="wrap kitchen">
+  <div class="k-top">
+    <h1 class="lead">Kitchen</h1>
+    <form method="post" action="{{ url_for('kitchen_logout') }}">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <button class="btn" type="submit">Log out</button>
+    </form>
+  </div>
+
+  {% for problem in problems %}
+    <p class="warn"><b>Check your .env:</b> {{ problem }}</p>
+  {% endfor %}
+  {% with msgs = get_flashed_messages() %}
+    {% for m in msgs %}<p class="flash">{{ m }}</p>{% endfor %}
+  {% endwith %}
+
+  <nav class="jump">
+    <a href="#orders">Orders</a><a href="#talk">Games &amp; announcements</a><a href="#menu">Menu</a><a href="#look">Look</a><a href="#scores">Scores</a>
+  </nav>
+
+  <!-- ORDERS -->
+  <section id="orders">
+    <h2>Orders <span class="count" id="count"></span></h2>
+    <p class="muted" id="orders-empty" hidden>No orders yet. Share the link and wait.</p>
+    <div class="cols">
+      <div><h3>Waiting</h3><div id="col-pending" class="stack"></div></div>
+      <div><h3>Ready, not picked up</h3><div id="col-ready" class="stack"></div></div>
+    </div>
+    <details class="done-box"><summary>Recently done</summary><div id="col-done" class="stack"></div></details>
+  </section>
+
+  <!-- GAMES + ANNOUNCE -->
+  <section id="talk">
+    <h2>Games &amp; announcements</h2>
+    <div class="two-up">
+      <div>
+        <h3>Games</h3>
+        <p class="muted" id="games-state">&nbsp;</p>
+        <button type="button" class="btn" id="pause-all">Pause everyone's games</button>
+        <p class="muted small">To pause one person, use the button on their order above. Paused players keep their run and carry on when you resume.</p>
+      </div>
+      <form method="post" action="{{ url_for('kitchen_announce') }}">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <h3>Announcement</h3>
+        <p class="muted">Shows as a bar at the top of every page, right away.</p>
+        <p class="muted">Now showing: <i>{{ s.announcement or 'nothing' }}</i></p>
+        <input name="text" maxlength="200" placeholder="Out of cookies, sorry!" value="">
+        <div class="row">
+          <button class="btn primary" type="submit">Announce</button>
+          <button class="btn" type="submit" name="clear" value="1">Clear</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section id="menu">
+    <h2>Menu</h2>
+    <p class="muted">What people can pick. "Most per order" caps how many of one thing someone can ask for. Untick Available to mark something sold out without deleting it.</p>
+
+    <form method="post" action="{{ url_for('kitchen_menu_add') }}" class="menu-row add">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input name="name" maxlength="60" placeholder="New item" required aria-label="New item name">
+      <label class="mini">Most per order <input name="max_qty" type="number" min="1" max="50" value="10"></label>
+      <button class="btn primary" type="submit">Add</button>
+    </form>
+
+    {% for m in menu %}
+    <div class="menu-row">
+      <form method="post" action="{{ url_for('kitchen_menu_save', mid=m.id) }}" class="menu-edit">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <input name="name" maxlength="60" value="{{ m.name }}" aria-label="Item name" required>
+        <label class="mini">Most per order <input name="max_qty" type="number" min="1" max="50" value="{{ m.max_qty }}"></label>
+        <label class="mini check"><input type="checkbox" name="available" {% if m.available %}checked{% endif %}> Available</label>
+        <button class="btn" type="submit">Save</button>
+      </form>
+      <div class="menu-side">
+        <form method="post" action="{{ url_for('kitchen_menu_move', mid=m.id) }}"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="dir" value="up"><button class="btn tiny" aria-label="Move up">&uarr;</button></form>
+        <form method="post" action="{{ url_for('kitchen_menu_move', mid=m.id) }}"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="dir" value="down"><button class="btn tiny" aria-label="Move down">&darr;</button></form>
+        <form method="post" action="{{ url_for('kitchen_menu_delete', mid=m.id) }}" onsubmit="return confirm('Delete this item from the menu?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="btn tiny danger">Delete</button></form>
+      </div>
+    </div>
+    {% else %}
+      <p class="muted">Nothing on the menu yet. Add your first item above.</p>
+    {% endfor %}
+  </section>
+
+  <!-- LOOK -->
+  <section id="look">
+    <h2>Look</h2>
+    <p class="muted">The name replaces "{{ s.site_name }}" everywhere: the pages, the browser tab, and the emails.</p>
+    <form method="post" action="{{ url_for('kitchen_look') }}" class="look" id="look-form">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <label>Site name <input name="site_name" maxlength="40" value="{{ s.site_name }}" required></label>
+
+      <label>Emoji next to the name
+        <input name="emoji" id="emoji-input" maxlength="12" value="{{ s.emoji }}" class="emoji-field">
+      </label>
+      <div class="emoji-pick">
+        {% for e in emoji_choices %}<button type="button" data-emoji="{{ e }}" aria-label="Use {{ e }}">{{ e }}</button>{% endfor %}
+      </div>
+
+      <div class="colors">
+        <label>Background <input type="color" name="color_bg" value="{{ s.color_bg }}"></label>
+        <label>Text <input type="color" name="color_ink" value="{{ s.color_ink }}"></label>
+        <label>Accent <input type="color" name="color_accent" value="{{ s.color_accent }}"></label>
+      </div>
+      <div class="presets">
+        <span class="muted">Or start from:</span>
+        {% for name, bg, ink, acc in presets %}
+          <button type="button" class="preset" data-bg="{{ bg }}" data-ink="{{ ink }}" data-accent="{{ acc }}">
+            <i style="background:{{ bg }}"></i><i style="background:{{ ink }}"></i><i style="background:{{ acc }}"></i>{{ name }}
+          </button>
+        {% endfor %}
+      </div>
+      <button class="btn primary" type="submit">Save look</button>
+    </form>
+  </section>
+
+  <!-- SCORES -->
+  <section id="scores">
+    <h2>Leaderboards</h2>
+    <p class="muted">Remove anything silly, or start fresh.</p>
+    <div class="two-up">
+      {% for game, label, unit in [('snake', 'Longest snake', 'long'), ('flappy', 'Most flappy points', 'pts')] %}
+      <div>
+        <h3>{{ label }}</h3>
+        {% for r in scoreboard[game] %}
+        <form method="post" action="{{ url_for('kitchen_score_delete', sid=r.id) }}" class="score-row">
+          <input type="hidden" name="csrf" value="{{ csrf() }}">
+          <span>{{ r.name }}</span><span class="leader"></span><b>{{ r.score }}</b>
+          <button class="btn tiny danger" aria-label="Remove {{ r.name }}">&times;</button>
+        </form>
+        {% else %}<p class="muted">Empty.</p>{% endfor %}
+        {% if scoreboard[game] %}
+        <form method="post" action="{{ url_for('kitchen_scores_clear') }}" onsubmit="return confirm('Clear the whole {{ game }} leaderboard?')">
+          <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="game" value="{{ game }}">
+          <button class="btn tiny danger">Clear all</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('kitchen.js') }}"></script>{% endblock %}
